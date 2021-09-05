@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -31,14 +32,19 @@ public class UploadPlanCommand implements SlashCommand {
     @Override
     public void performCommand(SlashCommandEvent event, Member m, MessageChannel channel) {
         YamlUtil.YamlData.UploadPlan plan = YamlUtil.getUploadPlan();
-        plan.addUpload(new YamlUtil.YamlData.UploadPlan.Upload(event.getOption("project").getAsString(), event.getOption("content")
-                .getAsString(), LocalDateTime.parse(event.getOption("time").getAsString(), DateTimeFormatter.ofPattern(
-                        "dd.MM.yyyy HH:mm"))));
-        saveYAML();
+        try {
+            plan.addUpload(new YamlUtil.YamlData.UploadPlan.Upload(event.getOption("project").getAsString(), event.getOption("content")
+                    .getAsString(), LocalDateTime.parse(event.getOption("time").getAsString(), DateTimeFormatter.ofPattern(
+                    "dd.MM.yyyy HH:mm"))));
+            saveYAML();
 
-        updateEmbed();
+            updateEmbed();
 
-        event.replyEmbeds(Bot.defaultEmbed().setTitle("Uploadplan").setDescription("Uploadplan geupdated!").build()).setEphemeral(true).queue();
+            event.replyEmbeds(Bot.defaultEmbed().setTitle("Uploadplan").setDescription("Uploadplan geupdated!").build()).setEphemeral(true).queue();
+        } catch(DateTimeParseException e) {
+            event.replyEmbeds(Bot.defaultEmbed().setTitle("Fehler").setDescription("Text " + e.getParsedString() + " konnte nicht geparst werden!").build())
+                    .setEphemeral(true).queue();
+        }
     }
 
     public static void updateEmbed() {
